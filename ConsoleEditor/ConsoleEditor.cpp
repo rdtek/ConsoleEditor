@@ -1,26 +1,10 @@
-#include <windows.h>
-#include <stdio.h>
-#include <iostream>
-
-enum EDITOR_MODE
-{
-    NORMAL_MODE = 0,
-    INSERT_MODE,
-    VISUAL_MODE,
-    SELECT_MODE
-};
-
-enum DIRECTION
-{
-    LEFT = 0,
-    UP,
-    RIGHT,
-    DOWN
-};
+#include "ConsoleEditor.h"
 
 EDITOR_MODE editor_mode = NORMAL_MODE;
 HANDLE h_std_out;
 HANDLE h_std_input;
+HANDLE h_orig_console_buff;
+
 int console_num_cols;
 int console_num_rows;
 int cursor_x = 0;
@@ -121,24 +105,126 @@ void RunEventLoop() {
     }
 }
 
-int main(int argc, char *argv[]) {
+int SaveConsoleBuffer(HANDLE h_saved_console_buff) {
 
-    system("cls");
+    HANDLE hStdOut;
+    CONSOLE_SCREEN_BUFFER_INFO screen_buff_size;
+    SMALL_RECT read_rect;
+    SMALL_RECT write_rect;
+    CHAR_INFO ch_info_buff[100000]; // [1000][100]; 1000 lines * 100 characters 
+    COORD coordBufSize;
+    COORD coordBufCoord;
+    BOOL fSuccess;
+
+    // Get a handle to the STDOUT screen buffer to copy from and 
+    // create a new screen buffer to copy to. 
+
+    hStdOut = GetStdHandle(STD_OUTPUT_HANDLE);
+    GetConsoleScreenBufferInfo(hStdOut, &screen_buff_size);
+    
+    if (hStdOut == INVALID_HANDLE_VALUE ||
+        h_saved_console_buff == INVALID_HANDLE_VALUE)
+    {
+        printf("CreateConsoleScreenBuffer failed - (%d)\n", GetLastError());
+        return 1;
+    }
+
+    // Set the source rectangle. 
+    read_rect.Top = screen_buff_size.dwCursorPosition.Y - 1001;
+    if (read_rect.Top < 0) read_rect.Top = 0;
+    read_rect.Left = 0;
+    read_rect.Bottom = screen_buff_size.dwCursorPosition.Y; // bot. right: row 1, col 79 
+    if (read_rect.Bottom <= 0) read_rect.Bottom = 1;
+    read_rect.Right = screen_buff_size.dwSize.X - 1;
+
+    // The temporary buffer size is 2 rows x 80 columns. 
+    coordBufSize.Y = 1000;
+    coordBufSize.X = read_rect.Right + 1;
+
+    // The top left destination cell of the temporary buffer is 
+    // row 0, col 0. 
+    coordBufCoord.X = 0;
+    coordBufCoord.Y = 0;
+
+    // Copy the block from the screen buffer to the temp. buffer. 
+    //TEST output some chars to the console so we can read them 
+    printf("abcdefg\nhijklmno");
+
+    fSuccess = ReadConsoleOutput(
+        hStdOut,        // screen buffer to read from 
+        ch_info_buff,      // buffer to copy into 
+        coordBufSize,   // col-row size of chiBuffer 
+        coordBufCoord,  // top left dest. cell in chiBuffer 
+        &read_rect); // screen buffer source rectangle 
+    
+    if (!fSuccess)
+    {
+        printf("ReadConsoleOutput failed - (%d)\n", GetLastError());
+        return 1;
+    }
+
+    // Set the destination rectangle. 
+    write_rect.Top = 10;    // top lt: row 10, col 0 
+    write_rect.Left = 0;
+    write_rect.Bottom = read_rect.Bottom - read_rect.Top; // bot. rt: row 11, col 79 
+    write_rect.Right = 79;
+
+    // Copy from the temporary buffer to the new screen buffer. 
+
+    fSuccess = WriteConsoleOutput(
+        h_saved_console_buff, // screen buffer to write to 
+        ch_info_buff,        // buffer to copy from 
+        coordBufSize,     // col-row size of chiBuffer 
+        coordBufCoord,    // top left src cell in chiBuffer 
+        &write_rect);  // dest. screen buffer rectangle 
+    if (!fSuccess)
+    {
+        printf("WriteConsoleOutput failed - (%d)\n", GetLastError());
+        return 1;
+    }
+}
+
+int RestoreConsoleBuffer(HANDLE h_console_buff) {
+    if (!SetConsoleActiveScreenBuffer(h_console_buff))
+    {
+        printf("SetConsoleActiveScreenBuffer failed - (%d)\n", GetLastError());
+        return 1;
+    }
+    return 0;
+}
+
+int main(int argc, char *argv[]) {
 
     h_std_out = GetStdHandle(STD_OUTPUT_HANDLE);
     h_std_input = GetStdHandle(STD_INPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO screen_buff_size;
 
+    h_orig_console_buff = CreateConsoleScreenBuffer(
+        GENERIC_READ |           // read/write access 
+        GENERIC_WRITE,
+        FILE_SHARE_READ |
+        FILE_SHARE_WRITE,        // shared 
+        NULL,                    // default security attributes 
+        CONSOLE_TEXTMODE_BUFFER, // must be TEXTMODE 
+        NULL);                   // reserved; must be NULL 
+
     GetConsoleScreenBufferInfo(h_std_out, &screen_buff_size);
+
+    SaveConsoleBuffer(h_orig_console_buff);
+
     SetScreenSize(screen_buff_size);
 
     //Print the line numbers on the left hand side
-    for (size_t i = 0; i < console_num_rows; i++) {
+    /*for (size_t i = 0; i < console_num_rows; i++) {
         printf("\n%i", i);
-    }
+    }*/
 
     MoveCursorToXY(1, 0);
+    
     RunEventLoop();
+
+    RestoreConsoleBuffer(h_orig_console_buff);
+    system("pause");
 
     return 0;
 }
