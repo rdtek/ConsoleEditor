@@ -2,8 +2,13 @@
 #include <stdio.h>
 #include <iostream>
 
-//See http://stackoverflow.com/questions/24708700/c-detect-when-user-presses-arrow-key
-//And ReadConsoleInput() function https://msdn.microsoft.com/en-us/library/windows/desktop/ms684961(v=vs.85).aspx
+enum EDITOR_MODE
+{
+    NORMAL_MODE = 0,
+    INSERT_MODE,
+    VISUAL_MODE,
+    SELECT_MODE
+};
 
 enum DIRECTION
 {
@@ -13,6 +18,7 @@ enum DIRECTION
     DOWN
 };
 
+EDITOR_MODE editor_mode = NORMAL_MODE;
 HANDLE h_std_out;
 HANDLE h_std_input;
 int console_num_cols;
@@ -48,25 +54,31 @@ void SetScreenSize(CONSOLE_SCREEN_BUFFER_INFO csbi) {
 }
 
 void MoveCursor(DIRECTION direction, int distance) {
+    
+    int cx = cursor_x;
+    int cy = cursor_y;
+    int cols = console_num_cols;
+    int rows = console_num_rows;
+
     switch (direction) {
         case LEFT:   
-            if (cursor_x >= 2 && b_line_numbers_on
-                || cursor_x >= 1 && !b_line_numbers_on) {
+            if (editor_mode == NORMAL_MODE && cx >= 2 && b_line_numbers_on
+                || cx >= 1 && !b_line_numbers_on) {
                 MoveCursorToXY(--cursor_x, cursor_y);
             }
             break;
         case UP:
-            if (cursor_y >= 1) {
+            if (editor_mode == NORMAL_MODE && cy >= 1) {
                 MoveCursorToXY(cursor_x, --cursor_y);
             }
             break;
         case RIGHT:  
-            if (cursor_x < (console_num_cols - 1) && b_line_numbers_on) {
+            if (editor_mode == NORMAL_MODE && cx < (cols - 1) && b_line_numbers_on) {
                 MoveCursorToXY(++cursor_x, cursor_y);
             }
             break;
         case DOWN:
-            if (cursor_y < console_num_rows - 1) {
+            if (editor_mode == NORMAL_MODE &&  (cy < rows - 1)) {
                 MoveCursorToXY(cursor_x, ++cursor_y);
             }
             break;
@@ -76,6 +88,9 @@ void MoveCursor(DIRECTION direction, int distance) {
 }
 
 void RunEventLoop() {
+    
+    DWORD num_events = 0;
+    DWORD num_events_read = 0;
 
     while (b_running) {
 
@@ -113,8 +128,6 @@ int main(int argc, char *argv[]) {
     h_std_out = GetStdHandle(STD_OUTPUT_HANDLE);
     h_std_input = GetStdHandle(STD_INPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO screen_buff_size;
-    DWORD num_events = 0;
-    DWORD num_events_read = 0;
 
     GetConsoleScreenBufferInfo(h_std_out, &screen_buff_size);
     SetScreenSize(screen_buff_size);
