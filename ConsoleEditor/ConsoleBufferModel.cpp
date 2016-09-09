@@ -1,12 +1,9 @@
-#include "ConsoleBuffer.h"
+#include "ConsoleBufferModel.h"
 
-ConsoleBuffer::ConsoleBuffer()
+/* ConsoleModelBuffer: constructor. */
+ConsoleModelBuffer::ConsoleModelBuffer()
 {
-    init_buff();
-}
-
-int ConsoleBuffer::init_buff() {
-    
+    // Creates a handle to an empty console screen buffer
     m_handle_screen_buff = CreateConsoleScreenBuffer(
         GENERIC_READ |           // read/write access 
         GENERIC_WRITE,
@@ -16,17 +13,17 @@ int ConsoleBuffer::init_buff() {
         CONSOLE_TEXTMODE_BUFFER, // must be TEXTMODE 
         NULL);                   // reserved; must be NULL 
 
-    if (m_handle_screen_buff == INVALID_HANDLE_VALUE) return 1;
-
-    return 0;
+    if (m_handle_screen_buff == INVALID_HANDLE_VALUE) {
+        //TODO: log error
+    }
 }
 
 //Console - Console object constructor, takes handle to console screen buffer
 //          Saves the state of the console so it can be retrieved.
-void ConsoleBuffer::copy_buffer(HANDLE h_source_buffer)
+void ConsoleModelBuffer::copy_from_buffer(HANDLE h_source_buffer)
 {
-    SMALL_RECT read_rect;
-    SMALL_RECT rect_write_area;
+    SMALL_RECT rect_src_read_area;
+    SMALL_RECT rect_dest_write_area;
     CHAR_INFO ch_info_temp_buff[100000]; // [1000][100]; 1000 lines * 100 characters 
     COORD coord_ch_temp_buff_size;
     COORD coord_start_temp_buff;
@@ -47,17 +44,16 @@ void ConsoleBuffer::copy_buffer(HANDLE h_source_buffer)
     size(src_screen_info.dwSize);
 
     // Set rectangle defining portion of source buffer to copy
-    read_rect.Top = src_screen_info.dwCursorPosition.Y - 1001;
-    if (read_rect.Top < 0) read_rect.Top = 0;
-    read_rect.Left = 0;
-    //read_rect.Bottom = src_screen_info.dwCursorPosition.Y; // bot. right: row 1, col 79 
-    read_rect.Bottom = src_screen_info.dwSize.Y - 1;
-    //if (read_rect.Bottom <= 0) src_screen_info.dwSize.Y;
-    read_rect.Right = src_screen_info.dwSize.X - 1;
+    rect_src_read_area.Top       = src_screen_info.dwCursorPosition.Y - 1001;
+    rect_src_read_area.Left      = 0;
+    rect_src_read_area.Bottom    = src_screen_info.dwSize.Y - 1;
+    rect_src_read_area.Right     = src_screen_info.dwSize.X - 1;
+    if (rect_src_read_area.Top < 0) rect_src_read_area.Top = 0;
+    if (rect_src_read_area.Bottom < 0) rect_src_read_area.Bottom = 0;
 
     // The temporary buffer size
     coord_ch_temp_buff_size.Y = 100;
-    coord_ch_temp_buff_size.X = read_rect.Right + 1;
+    coord_ch_temp_buff_size.X = rect_src_read_area.Right + 1;
 
     // The top left destination cell of the temporary buffer is 
     coord_start_temp_buff.X = 0;
@@ -69,7 +65,8 @@ void ConsoleBuffer::copy_buffer(HANDLE h_source_buffer)
         ch_info_temp_buff,        // buffer to copy into 
         coord_ch_temp_buff_size,  // col-row size of ch_info_buff 
         coord_start_temp_buff,    // top left dest. cell in ch_info_buff 
-        &read_rect);              // screen buffer source rectangle 
+        &rect_src_read_area           // screen buffer source rectangle 
+    );         
 
     if (!func_success) {
         printf("ReadConsoleOutput failed - (%d)\n", GetLastError());
@@ -77,10 +74,10 @@ void ConsoleBuffer::copy_buffer(HANDLE h_source_buffer)
     }
 
     // Set the destination rectangle. 
-    rect_write_area.Top = 0;     // top lt: row 10, col 0 
-    rect_write_area.Left = 0;
-    rect_write_area.Bottom = read_rect.Bottom; // bot. rt: row 11, col 79 
-    rect_write_area.Right = read_rect.Right;
+    rect_dest_write_area.Top     = 0;     // top lt: row 10, col 0 
+    rect_dest_write_area.Left    = 0;
+    rect_dest_write_area.Bottom  = rect_src_read_area.Bottom; // bot. rt: row 11, col 79 
+    rect_dest_write_area.Right   = rect_src_read_area.Right;
 
     // Copy from the temporary buffer to the new screen buffer. 
     func_success = WriteConsoleOutput(
@@ -88,7 +85,7 @@ void ConsoleBuffer::copy_buffer(HANDLE h_source_buffer)
         ch_info_temp_buff,       // buffer to copy from 
         coord_ch_temp_buff_size, // col-row size of ch_info_temp_buff 
         coord_start_temp_buff,   // top left src cell in ch_info_temp_buff 
-        &rect_write_area         // dest. screen buffer rectangle 
+        &rect_dest_write_area         // dest. screen buffer rectangle 
     );  
 
     if (!func_success) {
@@ -98,7 +95,7 @@ void ConsoleBuffer::copy_buffer(HANDLE h_source_buffer)
 }
 
 /* get_char_buffer: read the char_info items into the output array. */
-void ConsoleBuffer::get_char_buffer(CHAR_INFO *char_info_buff_out) {
+void ConsoleModelBuffer::get_char_buffer(CHAR_INFO *char_info_buff_out) {
     
     COORD coord_buff_size;
     COORD coord_destination;
@@ -119,7 +116,7 @@ void ConsoleBuffer::get_char_buffer(CHAR_INFO *char_info_buff_out) {
 }
 
 /* size: set the screen size for this console. */
-void ConsoleBuffer::size(COORD screen_size) {
+void ConsoleModelBuffer::size(COORD screen_size) {
     if (SetConsoleScreenBufferSize(m_handle_screen_buff, screen_size)) {
         m_width = screen_size.X;
         m_height = screen_size.Y;
@@ -127,15 +124,22 @@ void ConsoleBuffer::size(COORD screen_size) {
 }
 
 /* size: set the screen size for this console. */
-void ConsoleBuffer::size(int width, int height) {
+void ConsoleModelBuffer::size(int width, int height) {
     COORD screen_size;
     screen_size.X = width;
     screen_size.Y = height;
     size(screen_size);
 }
 
+/* refresh_cursor: cause the cursor to be shown in current position. */
+void ConsoleModelBuffer::refresh_cursor() {
+    if (cursor_X() >= 0 && cursor_Y() >= 0) {
+        move_cursor_to(cursor_X(), cursor_Y());
+    }
+}
+
 /* move_cursor_to: move the cursor to specified column and line number. */
-void ConsoleBuffer::move_cursor_to(int column, int line)
+void ConsoleModelBuffer::move_cursor_to(int column, int line)
 {
     COORD coord;
     m_cursor_X = coord.X = column;
@@ -150,7 +154,7 @@ void ConsoleBuffer::move_cursor_to(int column, int line)
 }
 
 /* move_cursor: move the cursor in specified direction by specified amount. */
-void ConsoleBuffer::move_cursor(DIRECTION direction, int distance) {
+void ConsoleModelBuffer::move_cursor(DIRECTION direction, int distance) {
 
     int cx = m_cursor_X;
     int cy = m_cursor_Y;
@@ -184,6 +188,7 @@ void ConsoleBuffer::move_cursor(DIRECTION direction, int distance) {
     }
 }
 
-ConsoleBuffer::~ConsoleBuffer()
+/* ~ConsoleModelBuffer: destructor. */
+ConsoleModelBuffer::~ConsoleModelBuffer()
 {
 }

@@ -1,5 +1,5 @@
 #pragma once
-#include <windows.h>
+#include "AppCommon.h"
 #include <stdio.h>
 #include <string>
 
@@ -21,14 +21,15 @@ enum EDITOR_MODE
     SELECT_MODE
 };
 
-class ConsoleBuffer
+class ConsoleModelBuffer
 {
 public:
-    ConsoleBuffer();
-    ~ConsoleBuffer();
+    ConsoleModelBuffer();
+    ~ConsoleModelBuffer();
 
-    void copy_buffer(HANDLE h_source_buffer);
+    void copy_from_buffer(HANDLE h_source_buffer);
 
+    void refresh_cursor();
     void move_cursor_to(int column, int line);
     void move_cursor(DIRECTION direction, int distance);
     
@@ -61,6 +62,5 @@ private:
     int m_cursor_Y;
     int m_width;
     int m_height;
-    int init_buff();
 };
 
