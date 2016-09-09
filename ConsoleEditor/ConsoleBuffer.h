@@ -21,17 +21,16 @@ enum EDITOR_MODE
     SELECT_MODE
 };
 
-class Console
+class ConsoleBuffer
 {
 public:
-    Console();
-    Console(HANDLE h_console_screen_buff);
-    ~Console();
+    ConsoleBuffer();
+    ~ConsoleBuffer();
 
-    void deactivate();
+    void copy_buffer(HANDLE h_source_buffer);
 
-    void MoveCursorToXY(int column, int line);
-    void MoveCursor(DIRECTION direction, int distance);
+    void move_cursor_to(int column, int line);
+    void move_cursor(DIRECTION direction, int distance);
     
     HANDLE h_screen_buff() const { return m_handle_screen_buff; }
     void h_screen_buff(HANDLE h_screen_buff) { m_handle_screen_buff = h_screen_buff; }
@@ -43,6 +42,9 @@ public:
 
     int width() const { return m_width; }
     int height() const { return m_height; }
+
+    int cursor_X() const { return m_cursor_X; }
+    void cursor_X(int x_position) { m_cursor_X = x_position; }
 
     int cursor_Y() const { return m_cursor_Y; }
     void cursor_Y(int y_position) { m_cursor_Y = y_position; }
@@ -59,5 +61,6 @@ private:
     int m_cursor_Y;
     int m_width;
     int m_height;
+    int init_buff();
 };
 
