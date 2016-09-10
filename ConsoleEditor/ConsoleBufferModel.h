@@ -2,6 +2,7 @@
 #include "AppCommon.h"
 #include <stdio.h>
 #include <string>
+#include "ConsoleBufferBase.h"
 
 using namespace std;
 
@@ -21,11 +22,11 @@ enum EDITOR_MODE
     SELECT_MODE
 };
 
-class ConsoleModelBuffer
+class ConsoleBufferModel : public ConsoleBufferBase
 {
 public:
-    ConsoleModelBuffer();
-    ~ConsoleModelBuffer();
+    ConsoleBufferModel() : ConsoleBufferBase() {};
+    ~ConsoleBufferModel();
 
     void copy_from_buffer(HANDLE h_source_buffer);
 
@@ -54,13 +55,9 @@ public:
     void line_numbers_on(int bool_on) { m_line_numbers_on = bool_on; }
 
 private:
-    HANDLE m_handle_screen_buff;
     EDITOR_MODE editor_mode = NORMAL_MODE;
     bool m_line_numbers_on;
-    CHAR_INFO m_char_buffer;
     int m_cursor_X;
     int m_cursor_Y;
-    int m_width;
-    int m_height;
 };
 

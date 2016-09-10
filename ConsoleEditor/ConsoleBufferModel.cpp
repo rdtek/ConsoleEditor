@@ -1,26 +1,11 @@
 #include "ConsoleBufferModel.h"
 
 /* ConsoleModelBuffer: constructor. */
-ConsoleModelBuffer::ConsoleModelBuffer()
-{
-    // Creates a handle to an empty console screen buffer
-    m_handle_screen_buff = CreateConsoleScreenBuffer(
-        GENERIC_READ |           // read/write access 
-        GENERIC_WRITE,
-        FILE_SHARE_READ |
-        FILE_SHARE_WRITE,        // shared 
-        NULL,                    // default security attributes 
-        CONSOLE_TEXTMODE_BUFFER, // must be TEXTMODE 
-        NULL);                   // reserved; must be NULL 
-
-    if (m_handle_screen_buff == INVALID_HANDLE_VALUE) {
-        //TODO: log error
-    }
-}
+// ConsoleModelBuffer::ConsoleModelBuffer() {}
 
 //Console - Console object constructor, takes handle to console screen buffer
 //          Saves the state of the console so it can be retrieved.
-void ConsoleModelBuffer::copy_from_buffer(HANDLE h_source_buffer)
+void ConsoleBufferModel::copy_from_buffer(HANDLE h_source_buffer)
 {
     SMALL_RECT rect_src_read_area;
     SMALL_RECT rect_dest_write_area;
@@ -95,7 +80,7 @@ void ConsoleModelBuffer::copy_from_buffer(HANDLE h_source_buffer)
 }
 
 /* get_char_buffer: read the char_info items into the output array. */
-void ConsoleModelBuffer::get_char_buffer(CHAR_INFO *char_info_buff_out) {
+void ConsoleBufferModel::get_char_buffer(CHAR_INFO *char_info_buff_out) {
     
     COORD coord_buff_size;
     COORD coord_destination;
@@ -116,7 +101,7 @@ void ConsoleModelBuffer::get_char_buffer(CHAR_INFO *char_info_buff_out) {
 }
 
 /* size: set the screen size for this console. */
-void ConsoleModelBuffer::size(COORD screen_size) {
+void ConsoleBufferModel::size(COORD screen_size) {
     if (SetConsoleScreenBufferSize(m_handle_screen_buff, screen_size)) {
         m_width = screen_size.X;
         m_height = screen_size.Y;
@@ -124,7 +109,7 @@ void ConsoleModelBuffer::size(COORD screen_size) {
 }
 
 /* size: set the screen size for this console. */
-void ConsoleModelBuffer::size(int width, int height) {
+void ConsoleBufferModel::size(int width, int height) {
     COORD screen_size;
     screen_size.X = width;
     screen_size.Y = height;
@@ -132,14 +117,14 @@ void ConsoleModelBuffer::size(int width, int height) {
 }
 
 /* refresh_cursor: cause the cursor to be shown in current position. */
-void ConsoleModelBuffer::refresh_cursor() {
+void ConsoleBufferModel::refresh_cursor() {
     if (cursor_X() >= 0 && cursor_Y() >= 0) {
         move_cursor_to(cursor_X(), cursor_Y());
     }
 }
 
 /* move_cursor_to: move the cursor to specified column and line number. */
-void ConsoleModelBuffer::move_cursor_to(int column, int line)
+void ConsoleBufferModel::move_cursor_to(int column, int line)
 {
     COORD coord;
     m_cursor_X = coord.X = column;
@@ -154,7 +139,7 @@ void ConsoleModelBuffer::move_cursor_to(int column, int line)
 }
 
 /* move_cursor: move the cursor in specified direction by specified amount. */
-void ConsoleModelBuffer::move_cursor(DIRECTION direction, int distance) {
+void ConsoleBufferModel::move_cursor(DIRECTION direction, int distance) {
 
     int cx = m_cursor_X;
     int cy = m_cursor_Y;
@@ -189,6 +174,6 @@ void ConsoleModelBuffer::move_cursor(DIRECTION direction, int distance) {
 }
 
 /* ~ConsoleModelBuffer: destructor. */
-ConsoleModelBuffer::~ConsoleModelBuffer()
+ConsoleBufferModel::~ConsoleBufferModel()
 {
 }

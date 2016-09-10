@@ -9,11 +9,11 @@ int main(int argc, char *argv[]) {
 
 #ifdef _DEBUG
     //Debug testing, output some chars to the console so we can read them 
-    printf("abcdefg\nhijklmno");
+    printf("abcdefg\test");
 #endif
 
-    ConsoleModelBuffer original_console;
-    ConsoleModelBuffer editor_console;
+    ConsoleBufferModel original_console;
+    ConsoleBufferModel editor_console;
 
     original_console.copy_from_buffer(h_std_out);
 

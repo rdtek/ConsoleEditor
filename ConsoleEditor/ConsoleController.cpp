@@ -44,9 +44,9 @@ void ConsoleController::move_cursor(DIRECTION direction, int distance) {
     m_current_console_buff.move_cursor(direction, distance);
 }
 
-void ConsoleController::activate_editor_view(ConsoleModelBuffer editor_model_buff) {
+void ConsoleController::activate_editor_view(ConsoleBufferModel editor_model_buff) {
 
-    ConsoleViewBuffer view_buffer;
+    ConsoleBufferView view_buffer;
     view_buffer.render(editor_model_buff);
 
     //Set the provided console buffer as the active console buffer
@@ -58,7 +58,7 @@ void ConsoleController::activate_editor_view(ConsoleModelBuffer editor_model_buf
     editor_model_buff.move_cursor_to(1, 0);
 }
 
-void ConsoleController::activate_original_view(ConsoleModelBuffer original_console) {
+void ConsoleController::activate_original_view(ConsoleBufferModel original_console) {
 
     original_console.refresh_cursor();
 

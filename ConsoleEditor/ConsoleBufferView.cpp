@@ -1,27 +1,12 @@
 #include "ConsoleBufferView.h"
 
 /* ConsoleViewBuffer: constructor. */
-ConsoleViewBuffer::ConsoleViewBuffer()
-{
-    // Creates a handle to an empty console screen buffer
-    m_handle_screen_buff = CreateConsoleScreenBuffer(
-        GENERIC_READ |           // read/write access 
-        GENERIC_WRITE,
-        FILE_SHARE_READ |
-        FILE_SHARE_WRITE,        // shared 
-        NULL,                    // default security attributes 
-        CONSOLE_TEXTMODE_BUFFER, // must be TEXTMODE 
-        NULL);                   // reserved; must be NULL 
-
-    if (m_handle_screen_buff == INVALID_HANDLE_VALUE) {
-        //TODO: log error
-    }
-}
+// ConsoleViewBuffer::ConsoleViewBuffer() {}
 
 /* ~ConsoleViewBuffer: destructor. */
-ConsoleViewBuffer::~ConsoleViewBuffer() { }
+ConsoleBufferView::~ConsoleBufferView() { }
 
-void ConsoleViewBuffer::render(ConsoleModelBuffer model_buffer) {
+void ConsoleBufferView::render(ConsoleBufferModel model_buffer) {
     
     HANDLE h_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO screen_info;
@@ -33,24 +18,24 @@ void ConsoleViewBuffer::render(ConsoleModelBuffer model_buffer) {
     CONSOLE_SCREEN_BUFFER_INFO src_screen_info;
     BOOL func_success;
 
-    GetConsoleScreenBufferInfo(h_stdout, &screen_info);
+    GetConsoleScreenBufferInfo(h_stdout, &src_screen_info);
 
     /* Set screen buffer size to match console window, this prevents mouse scrolling. */
     model_buffer.size(
-        screen_info.srWindow.Right - screen_info.srWindow.Left + 1,
-        screen_info.srWindow.Bottom - screen_info.srWindow.Top + 1
+        src_screen_info.srWindow.Right - src_screen_info.srWindow.Left + 1,
+        src_screen_info.srWindow.Bottom - src_screen_info.srWindow.Top + 1
     );
-
-    coord_ch_temp_buff_size.Y   = 100;
-    coord_ch_temp_buff_size.X   = rect_src_read_area.Right + 1;
-    coord_start_temp_buff.X     = 0;
-    coord_start_temp_buff.Y     = 0;
 
     rect_src_read_area.Top      = src_screen_info.dwCursorPosition.Y - 1001;
     rect_src_read_area.Left     = 0;
     rect_src_read_area.Bottom   = src_screen_info.dwSize.Y - 1;
     rect_src_read_area.Right    = src_screen_info.dwSize.X - 1;
     
+    coord_ch_temp_buff_size.Y   = 100;
+    coord_ch_temp_buff_size.X   = rect_src_read_area.Right + 1;
+    coord_start_temp_buff.X     = 0;
+    coord_start_temp_buff.Y     = 0;
+
     if (rect_src_read_area.Top < 0) rect_src_read_area.Top = 0;
     if (rect_src_read_area.Bottom < 0) rect_src_read_area.Bottom = 0;
 
@@ -76,7 +61,7 @@ void ConsoleViewBuffer::render(ConsoleModelBuffer model_buffer) {
     }
 }
 
-void ConsoleViewBuffer::write() {
+void ConsoleBufferView::write() {
 
     SMALL_RECT read_rect;
     SMALL_RECT rect_write_area;
@@ -101,6 +86,6 @@ void ConsoleViewBuffer::write() {
     }
 }
 
-void ConsoleViewBuffer::flush() {
+void ConsoleBufferView::flush() {
 
 }
