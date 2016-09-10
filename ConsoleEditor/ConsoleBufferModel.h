@@ -37,8 +37,6 @@ public:
     HANDLE h_screen_buff() const { return m_handle_screen_buff; }
     void h_screen_buff(HANDLE h_screen_buff) { m_handle_screen_buff = h_screen_buff; }
 
-    void get_char_buffer(CHAR_INFO *char_buff_out);
-
     void size(COORD screen_size);
     void size(int width, int height);
 

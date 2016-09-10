@@ -2,6 +2,9 @@
 #include "AppCommon.h"
 #include "ConsoleBufferBase.h"
 #include "ConsoleBufferModel.h"
+#include <vector>
+
+using namespace std;
 
 class ConsoleBufferView : public ConsoleBufferBase
 {
