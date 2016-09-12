@@ -13,6 +13,6 @@ public:
     void activate_original_view(ConsoleBufferModel original_console);
     void activate_editor_view(ConsoleBufferModel editor_console);
 private:
-    ConsoleBufferModel m_current_console_buff;
+    ConsoleBufferBase m_current_console_buff;
 };
 

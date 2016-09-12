@@ -147,6 +147,7 @@
     <ClCompile Include="AppMain.cpp" />
     <ClCompile Include="ConsoleController.cpp" />
     <ClCompile Include="ConsoleBufferView.cpp" />
+    <ClCompile Include="logging.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCommon.h" />
@@ -155,6 +156,7 @@
     <ClInclude Include="AppMain.h" />
     <ClInclude Include="ConsoleController.h" />
     <ClInclude Include="ConsoleBufferView.h" />
+    <ClInclude Include="logging.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

@@ -26,14 +26,15 @@ void ConsoleController::run_event_loop() {
             ReadConsoleInput(h_std_input, event_buff, 1, &num_events_read);
 
             if (event_buff[0].EventType == KEY_EVENT && event_buff[0].Event.KeyEvent.bKeyDown) {
-
-                switch (event_buff[0].Event.KeyEvent.wVirtualKeyCode) {
-                case VK_LEFT:    move_cursor(LEFT, 1);   break;
-                case VK_RIGHT:   move_cursor(RIGHT, 1);  break;
-                case VK_UP:      move_cursor(UP, 1);     break;
-                case VK_DOWN:    move_cursor(DOWN, 1);   break;
-                case VK_ESCAPE:  b_running = false;                         break;
-                default: break;
+                WORD key_code = event_buff[0].Event.KeyEvent.wVirtualKeyCode;
+                //TODO: Handle real character keys a-z,0-9, other chars etc.
+                switch (key_code) {
+                    case VK_LEFT:    move_cursor(LEFT, 1);   break;
+                    case VK_RIGHT:   move_cursor(RIGHT, 1);  break;
+                    case VK_UP:      move_cursor(UP, 1);     break;
+                    case VK_DOWN:    move_cursor(DOWN, 1);   break;
+                    case VK_ESCAPE:  b_running = false;      break;
+                    default: break;
                 }
             }
         }
@@ -51,16 +52,8 @@ void ConsoleController::activate_editor_view(ConsoleBufferModel editor_model_buf
     ConsoleBufferView           view_buffer;
 
     GetConsoleScreenBufferInfo(h_stdout, &screen_info);
-
-    view_buffer.render(editor_model_buff, screen_info.dwSize.X, screen_info.dwSize.Y);
-
-    //Set the provided console buffer as the active console buffer
-    if (!SetConsoleActiveScreenBuffer(editor_model_buff.h_screen_buff())) {
-        printf("SetConsoleActiveScreenBuffer failed - (%d)\n", GetLastError());
-        return;
-    }
-
-    editor_model_buff.move_cursor_to(1, 0);
+    view_buffer.render(editor_model_buff, screen_info);
+    m_current_console_buff = view_buffer;
 }
 
 void ConsoleController::activate_original_view(ConsoleBufferModel original_console) {
