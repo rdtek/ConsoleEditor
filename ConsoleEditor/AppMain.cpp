@@ -1,7 +1,5 @@
 #include "AppMain.h"
 
-ConsoleController console_controller;
-
 /* main - applicatin entry point.*/
 int main(int argc, char *argv[]) {
 
@@ -9,9 +7,10 @@ int main(int argc, char *argv[]) {
 
 #ifdef _DEBUG
     //Debug testing, output some chars to the console so we can read them 
-    printf("abcdefg\test");
+    printf("abcdefg\ntest");
 #endif
 
+    ConsoleController  console_controller;
     ConsoleBufferModel original_console;
     ConsoleBufferModel editor_console;
 

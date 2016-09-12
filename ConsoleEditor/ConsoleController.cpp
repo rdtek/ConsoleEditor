@@ -46,8 +46,13 @@ void ConsoleController::move_cursor(DIRECTION direction, int distance) {
 
 void ConsoleController::activate_editor_view(ConsoleBufferModel editor_model_buff) {
 
-    ConsoleBufferView view_buffer;
-    view_buffer.render(editor_model_buff);
+    HANDLE                      h_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
+    CONSOLE_SCREEN_BUFFER_INFO  screen_info;
+    ConsoleBufferView           view_buffer;
+
+    GetConsoleScreenBufferInfo(h_stdout, &screen_info);
+
+    view_buffer.render(editor_model_buff, screen_info.dwSize.X, screen_info.dwSize.Y);
 
     //Set the provided console buffer as the active console buffer
     if (!SetConsoleActiveScreenBuffer(editor_model_buff.h_screen_buff())) {

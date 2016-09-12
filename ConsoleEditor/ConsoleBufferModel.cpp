@@ -8,7 +8,6 @@
 void ConsoleBufferModel::copy_from_buffer(HANDLE h_source_buffer)
 {
     SMALL_RECT rect_src_read_area;
-    SMALL_RECT rect_dest_write_area;
     CHAR_INFO ch_info_temp_buff[100000]; // [1000][100]; 1000 lines * 100 characters 
     COORD coord_ch_temp_buff_size;
     COORD coord_start_temp_buff;
@@ -21,12 +20,10 @@ void ConsoleBufferModel::copy_from_buffer(HANDLE h_source_buffer)
         return;
     }
 
-    // Get the curson position from the source buffer
+    // Get the cursor position from the source buffer
     GetConsoleScreenBufferInfo(h_source_buffer, &src_screen_info);
     m_cursor_X = src_screen_info.dwCursorPosition.X;
     m_cursor_Y = src_screen_info.dwCursorPosition.Y;
-
-    size(src_screen_info.dwSize);
 
     // Set rectangle defining portion of source buffer to copy
     rect_src_read_area.Top       = src_screen_info.dwCursorPosition.Y - 1001;
@@ -44,39 +41,31 @@ void ConsoleBufferModel::copy_from_buffer(HANDLE h_source_buffer)
     coord_start_temp_buff.X = 0;
     coord_start_temp_buff.Y = 0;
 
-    // Copy the block from the screen buffer to the temp. buffer. 
+    // Copy the block from the screen buffer to the temp buffer. 
     func_success = ReadConsoleOutput(
         h_source_buffer,          // screen buffer to read from 
         ch_info_temp_buff,        // buffer to copy into 
         coord_ch_temp_buff_size,  // col-row size of ch_info_buff 
         coord_start_temp_buff,    // top left dest. cell in ch_info_buff 
-        &rect_src_read_area           // screen buffer source rectangle 
-    );         
+        &rect_src_read_area       // screen buffer source rectangle 
+    );
 
     if (!func_success) {
         printf("ReadConsoleOutput failed - (%d)\n", GetLastError());
         return;
     }
 
-    // Set the destination rectangle. 
-    rect_dest_write_area.Top     = 0;     // top lt: row 10, col 0 
-    rect_dest_write_area.Left    = 0;
-    rect_dest_write_area.Bottom  = rect_src_read_area.Bottom; // bot. rt: row 11, col 79 
-    rect_dest_write_area.Right   = rect_src_read_area.Right;
+    //Load the characters into a vector
+    int num_chars_read = (rect_src_read_area.Right + 1 - rect_src_read_area.Left)
+        * (rect_src_read_area.Bottom + 1 - rect_src_read_area.Top);
+    
+    m_vect_char_buffer.insert(
+        m_vect_char_buffer.end(), 
+        &ch_info_temp_buff[0], 
+        &ch_info_temp_buff[num_chars_read - 1]
+    );
 
-    // Copy from the temporary buffer to the new screen buffer. 
-    func_success = WriteConsoleOutput(
-        m_handle_screen_buff,    // screen buffer to write to 
-        ch_info_temp_buff,       // buffer to copy from 
-        coord_ch_temp_buff_size, // col-row size of ch_info_temp_buff 
-        coord_start_temp_buff,   // top left src cell in ch_info_temp_buff 
-        &rect_dest_write_area         // dest. screen buffer rectangle 
-    );  
-
-    if (!func_success) {
-        printf("WriteConsoleOutput failed - (%d)\n", GetLastError());
-        return;
-    }
+    size(src_screen_info.dwSize);
 }
 
 /* ~ConsoleModelBuffer: destructor. */
