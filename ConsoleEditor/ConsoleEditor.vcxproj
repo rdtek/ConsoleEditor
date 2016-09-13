@@ -142,21 +142,22 @@
     </Link>
   </ItemDefinitionGroup>
   <ItemGroup>
-    <ClCompile Include="ConsoleBufferBase.cpp" />
-    <ClCompile Include="ConsoleBufferModel.cpp" />
+    <ClCompile Include="CharInfoBuffer.cpp" />
+    <ClCompile Include="ConsoleBuffer.cpp" />
     <ClCompile Include="AppMain.cpp" />
     <ClCompile Include="ConsoleController.cpp" />
-    <ClCompile Include="ConsoleBufferView.cpp" />
-    <ClCompile Include="logging.cpp" />
+    <ClCompile Include="FileTools.cpp" />
+    <ClCompile Include="Logging.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="AppCommon.h" />
-    <ClInclude Include="ConsoleBufferBase.h" />
-    <ClInclude Include="ConsoleBufferModel.h" />
+    <ClInclude Include="CharInfoBuffer.h" />
+    <ClInclude Include="ConsoleBuffer.h" />
     <ClInclude Include="AppMain.h" />
+    <ClInclude Include="ConsoleColors.h" />
     <ClInclude Include="ConsoleController.h" />
-    <ClInclude Include="ConsoleBufferView.h" />
-    <ClInclude Include="logging.h" />
+    <ClInclude Include="FileTools.h" />
+    <ClInclude Include="Logging.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />
   <ImportGroup Label="ExtensionTargets">

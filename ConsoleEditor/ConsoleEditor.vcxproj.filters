@@ -21,16 +21,16 @@
     <ClCompile Include="AppMain.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ConsoleBufferModel.cpp">
+    <ClCompile Include="Logging.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ConsoleBufferView.cpp">
+    <ClCompile Include="ConsoleBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="ConsoleBufferBase.cpp">
+    <ClCompile Include="FileTools.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
-    <ClCompile Include="logging.cpp">
+    <ClCompile Include="CharInfoBuffer.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
@@ -44,16 +44,19 @@
     <ClInclude Include="AppMain.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConsoleBufferModel.h">
+    <ClInclude Include="Logging.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConsoleBufferView.h">
+    <ClInclude Include="ConsoleBuffer.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="ConsoleBufferBase.h">
+    <ClInclude Include="FileTools.h">
       <Filter>Header Files</Filter>
     </ClInclude>
-    <ClInclude Include="logging.h">
+    <ClInclude Include="CharInfoBuffer.h">
+      <Filter>Header Files</Filter>
+    </ClInclude>
+    <ClInclude Include="ConsoleColors.h">
       <Filter>Header Files</Filter>
     </ClInclude>
   </ItemGroup>
