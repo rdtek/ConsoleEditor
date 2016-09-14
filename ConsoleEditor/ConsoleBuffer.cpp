@@ -138,13 +138,78 @@ void ConsoleBuffer::char_buffer_array(CHAR_INFO *char_info_buff_out) {
     );
 }
 
+void ConsoleBuffer::insert_line_num(size_t line_num, size_t *line_num_size_out) {
+   
+    string str_line_idx_label = to_string(line_num);
+    if (str_line_idx_label.size() == 1)
+        str_line_idx_label.insert(0, 1, ' ');
+    str_line_idx_label += ' ';
+    *line_num_size_out = str_line_idx_label.size();
+
+    for (int i = 0; i < str_line_idx_label.size(); i++) {
+        CHAR_INFO ci_line_num;
+        ci_line_num.Char.UnicodeChar = str_line_idx_label.at(i);
+        ci_line_num.Attributes = FG_COLOR::CYAN;
+        m_view_char_info_buff.append(ci_line_num);
+    }
+}
+
+int ConsoleBuffer::insert_line_chars(size_t num_chars_this_line, size_t idx_model_buff_begin, size_t idx_model_buff_end) {
+
+    int num_chars_inserted;
+    int idx_view_char = 0;
+    int count_line_chars = 0;
+    int model_buff_max = this->length();
+
+    //Get the range of chars from the model vector
+    m_model_char_info_buff[idx_model_buff_begin];
+    m_model_char_info_buff[idx_model_buff_begin + num_chars_this_line];
+
+    vector<CharInfoBuffer>::const_iterator first = m_model_char_info_buff.begin() + idx_model_buff_begin;
+    vector<CharInfoBuffer>::const_iterator last  = m_model_char_info_buff.begin() + idx_model_buff_begin + num_chars_this_line;
+    //m_view_char_info_buff.insert()
+    //a.insert(a.end(), b.begin(), b.end());
+
+    //Insert this range of chars into the view vector
+    //m_view_char_info_buff
+
+    for (size_t count_line_chars = 0; count_line_chars < num_chars_this_line; count_line_chars++) {
+
+        CHAR_INFO ch_info_view;
+
+        //Get the char from the model buffer
+        if (idx_model_buff < model_buff_max) {
+            CHAR_INFO ch_info_temp;
+            ch_info_temp.Char.UnicodeChar = m_model_char_info_buff[idx_model_char].Char.UnicodeChar;
+
+            if (ch_info_temp.Char.UnicodeChar == '\n') {
+                //Fill space to end of line
+                ch_info_view_buff.set_range(' ', idx_view_char, num_chars_this_line - count_line_chars);
+            }
+            else {
+                ch_info_view.Char.UnicodeChar = ch_info_temp.Char.UnicodeChar;
+            }
+
+            idx_model_char++;
+        }
+        else { /* Fill the remaining cells with blank spaces. */
+            ch_info_view.Char.UnicodeChar = ' ';
+        }
+
+        ch_info_view.Attributes = FG_COLOR::WHITE;
+
+        idx_view_char++;
+    }
+
+    return num_chars_inserted;
+}
+
 void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
 
     const int   ch_buff_num_lines = 1000;
     const int   ch_buff_2d_size = 100000;  // 1000 lines * 100 characters 
     COORD       coord_ch_temp_buff_size;
     COORD       coord_read_top_left;
-    BOOL        func_success;
 
     int screen_num_columns  = screen_info.srWindow.Right - screen_info.srWindow.Left + 1;
     int screen_num_rows     = screen_info.srWindow.Bottom - screen_info.srWindow.Top + 1;
@@ -152,79 +217,25 @@ void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
     
     CHAR_INFO * ptr_ch_info_view_arr = new CHAR_INFO[char_buff_size];
 
-    //Build new char info array inserting line numbers
-    int idx_line = 0;
-    int idx_model_char = 0;
-    int idx_view_char = 0;
-
-    //Add the line number chars and content chars into a vector
-    int buffer_length = this->length();
+    //Build new char info array inserting line numbers if necessary
+    int idx_line        = 0;
     while (idx_line < screen_num_rows) {
-
-        //Add the line number characters first
-        string str_line_idx_label = to_string(idx_line);
-        str_line_idx_label += ' ';
-
-        for (int i = 0; i < str_line_idx_label.size(); i++) {
-            CHAR_INFO ch_info_line_num;
-            ch_info_line_num.Char.UnicodeChar   = str_line_idx_label.at(i);
-            ch_info_line_num.Attributes         = FG_COLOR::CYAN;
-            ptr_ch_info_view_arr[idx_view_char]     = ch_info_line_num;
-            idx_view_char++;
-        }
-
-        //Add the data model chars i.e. the real content
-        int num_chars_this_line = screen_num_columns - str_line_idx_label.size();
-        int count_line_chars = 0;
-
-        for (size_t count_line_chars = 0;
-            count_line_chars < num_chars_this_line; count_line_chars++) {
-
-            CHAR_INFO ch_info_view;
-
-            //Get the char from the model buffer
-            if (idx_model_char < this->length()) {
-                CHAR_INFO ch_info_temp;
-                ch_info_temp.Char.UnicodeChar = m_model_char_info_buff[idx_model_char].Char.UnicodeChar;
-                
-                if (ch_info_temp.Char.UnicodeChar == '\n') {
-                    //Fill space to end of line
-                    ch_info_view_buff.set_range( ' ', idx_view_char, num_chars_this_line - count_line_chars);
-                }
-                else {
-                    ch_info_view.Char.UnicodeChar = ch_info_temp.Char.UnicodeChar;
-
-                }
-     
-                idx_model_char++;
-            }
-            else { /* Fill the remaining cells with blank spaces. */
-                ch_info_view.Char.UnicodeChar = ' ';
-            }
-
-            ch_info_view.Attributes = FG_COLOR::WHITE;
-            ch_info_view_buff[idx_view_char] = ch_info_view;
-            idx_view_char++;
-        }
-
+        size_t line_num_size_out;
+        this->insert_line_num(idx_line, &line_num_size_out);
+        this->insert_line_chars(screen_num_columns - line_num_size_out);
         idx_line++;
     }
 
-    COORD coord_write_size;
-    coord_write_size.Y = screen_num_rows;
-    coord_write_size.X = screen_num_columns;
+    //Update the console display
+    m_view_char_info_buff.to_array(ptr_ch_info_view_arr);
+    this->display(screen_info, ptr_ch_info_view_arr);
 
-    COORD coord_write_top_left;
-    coord_write_top_left.X = 0;
-    coord_write_top_left.Y = 0;
+    delete[] ptr_ch_info_view_arr;
+}
 
-    SMALL_RECT rect_write_area;
-    rect_write_area.Top = 0;
-    rect_write_area.Left = 0;
-    rect_write_area.Bottom = coord_write_size.Y - 1;
-    rect_write_area.Right = coord_write_size.X - 1;
+void ConsoleBuffer::display(CONSOLE_SCREEN_BUFFER_INFO screen_info, CHAR_INFO* ptr_char_info_arr) {
 
-    //m_handle_screen_buff = GetStdHandle(STD_OUTPUT_HANDLE);
+    BOOL        func_success;
 
     // Creates a handle to an empty console screen buffer
     m_handle_screen_buff = CreateConsoleScreenBuffer(
@@ -241,11 +252,23 @@ void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
         log_wstr(L"\nDEBUG: ", L"Model m_handle_screen_buff is invalid.\n");
     }
 
-    m_view_char_info_buff.to_char_info_array(ptr_ch_info_view_arr);
+    COORD coord_write_size;
+    coord_write_size.Y = screen_info.dwSize.Y;
+    coord_write_size.X = screen_info.dwSize.X;
+
+    COORD coord_write_top_left;
+    coord_write_top_left.X = 0;
+    coord_write_top_left.Y = 0;
+
+    SMALL_RECT rect_write_area;
+    rect_write_area.Top = 0;
+    rect_write_area.Left = 0;
+    rect_write_area.Bottom = coord_write_size.Y - 1;
+    rect_write_area.Right = coord_write_size.X - 1;
 
     func_success = WriteConsoleOutput(
         m_handle_screen_buff,    // Screen buffer to write to 
-        ptr_ch_info_view_arr,        // Buffer to copy from 
+        ptr_char_info_arr,        // Buffer to copy from 
         coord_write_size,        // Column-row size of char info buffer 
         coord_write_top_left,    // Top left position 
         &rect_write_area         // Destination screen buffer rectangle 
@@ -262,8 +285,6 @@ void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
     }
 
     move_cursor_to(1, 0, m_handle_screen_buff);
-
-    delete[] ch_info_view_buff;
 }
 
 /* move_cursor_to: move the cursor to specified column and line number. */

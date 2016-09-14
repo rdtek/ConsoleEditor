@@ -26,10 +26,13 @@ public:
 
     /* get_char_buffer: read the char_info items into the output array. */
     void char_buffer_array(CHAR_INFO *char_info_buff_out);
+    void insert_line_num(size_t line_num, size_t *line_num_size_out);
+    void insert_line_chars(size_t num_chars_this_line);
     void append(string& str_content);
 
     int length();
     void render(CONSOLE_SCREEN_BUFFER_INFO screen_info);
+    void display(CONSOLE_SCREEN_BUFFER_INFO screen_info, CHAR_INFO* ptr_char_info_arr);
 
     void refresh_cursor();
     void move_cursor(DIRECTION direction, int distance);

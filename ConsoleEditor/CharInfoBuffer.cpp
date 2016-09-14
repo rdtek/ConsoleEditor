@@ -36,6 +36,6 @@ void CharInfoBuffer::set_range(const char chr, size_t idx_start, size_t length) 
 }
 
 /* to_char_info_array: fill the ouput array with the CHAR_INFO items. */
-void CharInfoBuffer::to_char_info_array(CHAR_INFO* ptr_char_info_arr_out) {
+void CharInfoBuffer::to_array(CHAR_INFO* ptr_char_info_arr_out) {
     //TODO: copy the content from the vector to the output array
 }
