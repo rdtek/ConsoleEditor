@@ -36,6 +36,13 @@ void ConsoleController::run_event_loop() {
                     case VK_ESCAPE:  b_running = false;      break;
                     default: break;
                 }
+
+                if (m_current_console_buff.editor_mode() == EDITOR_MODE::NORMAL_MODE) {
+                    //switch (key_code) {
+                    //    case ikey: /* Enter insert mode*/ break;
+                    //    default: break;
+                    //}
+                }
             }
         }
     }

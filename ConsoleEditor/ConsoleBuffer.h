@@ -15,6 +15,9 @@ public:
     ConsoleBuffer();
     ~ConsoleBuffer();
 
+    EDITOR_MODE editor_mode() const { return m_editor_mode; }
+    void editor_mode(EDITOR_MODE mode) { m_editor_mode = mode; }
+
     HANDLE h_screen_buff() const { return m_handle_screen_buff; }
     void h_screen_buff(HANDLE h_screen_buff) { m_handle_screen_buff = h_screen_buff; }
 
@@ -51,10 +54,10 @@ public:
     int height();
 
 protected:
-    EDITOR_MODE editor_mode = NORMAL_MODE;
+    EDITOR_MODE m_editor_mode = NORMAL_MODE;
     bool m_line_numbers_on;
     HANDLE m_handle_screen_buff;
-    vector<char> m_model_char_buff;
+    vector<string> m_model_lines;
     CharInfoBuffer m_view_char_info_buff;
     int m_cursor_X;
     int m_cursor_Y;

@@ -5,27 +5,19 @@ ConsoleBuffer::ConsoleBuffer() {}
 ConsoleBuffer::~ConsoleBuffer() {}
 
 int ConsoleBuffer::length(){
-    return m_model_char_buff.size(); 
+    return m_model_lines.size(); 
 }
 
 //load_file: Load first 1000 lines into buffer
 void ConsoleBuffer::load_file(const string& filename) {
     
     ifstream in(filename.c_str());
-    
+    m_model_lines.clear();
+
     for (int i = 0; i < 1000; ++i) {
         string str_line;
         getline(in, str_line);
-
-        //Load the line content into vector
-        for (size_t i = 0; i < str_line.length(); i++) {
-            char c = str_line[i]; 
-            //TODO: store each line in seperate buffer
-            //perhaps use a vector of strings to store model instead of vector of chars
-            m_model_char_buff.push_back(c);
-        }
-
-        m_model_char_buff.push_back('\n');
+        m_model_lines.push_back(str_line);
     }
 }
 
@@ -146,22 +138,21 @@ void ConsoleBuffer::build_line_num_string(size_t line_num, string& str_line_num_
     str_line_num_out += ' ';
 }
 
-void ConsoleBuffer::build_line_content_string(size_t idx_model_begin, size_t content_length, string& str_content_out) {
-    
-    size_t line_char_count = 0;
+void ConsoleBuffer::build_line_content_string(size_t idx_line, size_t required_line_length, string& str_line_out) {
 
-    for (size_t i = idx_model_begin; i < idx_model_begin + content_length; i++)
+    size_t total_lines = m_model_lines.size();
+    str_line_out = m_model_lines[idx_line];
+
+    //Pad right to fill up to line length
+    if(str_line_out.size() < required_line_length)
     {
-        //If newline char need to fill out remaining blank cells
-        char c = m_model_char_buff[i];
-        if (c == '\n') {
-            int num_fill_chars = content_length - line_char_count;
-            str_content_out.append(num_fill_chars, ' ');
-            break;
-        } else {   
-            str_content_out.append(1, m_model_char_buff[i]);
-            line_char_count++;
-        }
+        int num_fill_chars = 
+            required_line_length - str_line_out.size();
+        if (num_fill_chars >= 1) 
+            str_line_out.append(num_fill_chars, ' ');
+    } 
+    else if(str_line_out.size() > required_line_length){
+        //TODO: deal with too big lines, spill onto line below
     }
 }
 
@@ -173,11 +164,10 @@ void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
     COORD       coord_read_top_left;
 
     int screen_num_columns = screen_info.srWindow.Right - screen_info.srWindow.Left + 1;
-    int screen_num_rows = screen_info.srWindow.Bottom - screen_info.srWindow.Top + 1;
+    int screen_num_rows    = screen_info.srWindow.Bottom - screen_info.srWindow.Top + 1;
 
     //Build new char info array inserting line numbers if necessary
     size_t idx_line        = 0;
-    size_t idx_model_char  = 0;
     size_t total_screen_lines = screen_num_rows >= 0 ? screen_num_rows : 0;
 
     //Build char buffer line by line
@@ -191,25 +181,22 @@ void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
         //Append line content to char info view buffer
         string str_line_content;
         size_t line_content_length = screen_num_columns - str_line_num.size();
-        this->build_line_content_string(idx_model_char, line_content_length, str_line_content);
+        this->build_line_content_string(idx_line, line_content_length, str_line_content);
         m_view_char_info_buff.append(str_line_content, FG_COLOR::WHITE);
 
-        idx_model_char += line_content_length;
         idx_line++;
     }
 
     //Update the console display
-    //m_view_char_info_buff.to_array(ptr_ch_info_view_arr);
-    size_t vector_size = m_view_char_info_buff.size();
     this->display(screen_info);
 }
 
 void ConsoleBuffer::display(CONSOLE_SCREEN_BUFFER_INFO screen) {
 
-    BOOL        func_success;
-    int         screen_ncols = screen.srWindow.Right - screen.srWindow.Left + 1;
-    int         screen_nrows = screen.srWindow.Bottom - screen.srWindow.Top + 1;
-    int         char_buff_size = screen_ncols * screen_nrows;
+    BOOL func_success;
+    int  screen_ncols = screen.srWindow.Right - screen.srWindow.Left + 1;
+    int  screen_nrows = screen.srWindow.Bottom - screen.srWindow.Top + 1;
+    int  char_buff_size = screen_ncols * screen_nrows;
     
     //Set buffer large enough to hold characters for one big screen
     //TODO: declare a dynamic array size.
@@ -266,7 +253,7 @@ void ConsoleBuffer::display(CONSOLE_SCREEN_BUFFER_INFO screen) {
         return;
     }
 
-    move_cursor_to(1, 0, m_handle_screen_buff);
+    move_cursor_to(3, 0, m_handle_screen_buff);
 }
 
 /* move_cursor_to: move the cursor to specified column and line number. */
@@ -301,23 +288,23 @@ void ConsoleBuffer::move_cursor(DIRECTION direction, int distance) {
 
     switch (direction) {
     case LEFT:
-        if (editor_mode == NORMAL_MODE && curs_x >= 2 && m_line_numbers_on
+        if (m_editor_mode == NORMAL_MODE && curs_x >= 2 && m_line_numbers_on
             || curs_x >= 1 && !m_line_numbers_on) {
             move_cursor_to(--m_cursor_X, m_cursor_Y, h_screen_buff);
         }
         break;
     case UP:
-        if (editor_mode == NORMAL_MODE && curs_y >= 1) {
+        if (m_editor_mode == NORMAL_MODE && curs_y >= 1) {
             move_cursor_to(m_cursor_X, --m_cursor_Y, h_screen_buff);
         }
         break;
     case RIGHT:
-        if (editor_mode == NORMAL_MODE && curs_x < (cols - 1) && m_line_numbers_on) {
+        if (m_editor_mode == NORMAL_MODE && curs_x < (cols - 1) && m_line_numbers_on) {
             move_cursor_to(++m_cursor_X, m_cursor_Y, h_screen_buff);
         }
         break;
     case DOWN:
-        if (editor_mode == NORMAL_MODE && (curs_y < rows - 1)) {
+        if (m_editor_mode == NORMAL_MODE && (curs_y < rows - 1)) {
             move_cursor_to(m_cursor_X, ++m_cursor_Y, h_screen_buff);
         }
         break;
