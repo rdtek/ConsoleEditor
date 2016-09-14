@@ -1,7 +1,6 @@
 #pragma once
-#include "AppCommon.h"
 #include <vector>
-#include "CharInfoBuffer.h"
+#include "AppCommon.h"
 #include "ConsoleColors.h"
 
 using namespace std;
@@ -12,10 +11,12 @@ public:
     CharInfoBuffer();
     ~CharInfoBuffer();
     int size();
+    CHAR_INFO CharInfoBuffer::at(size_t index);
     void append(CHAR_INFO& char_info);
-    void set_range(const char chr, size_t idx_start, size_t length);
-    void insert(size_t idx_insert, CHAR_INFO* ptr_char_info_array_start, size_t length);
+    void append(CHAR_INFO* char_info_arr, size_t begin, size_t length);
+    void append(const string& str_line_content, FG_COLOR foreground_color);
     void CharInfoBuffer::to_array(CHAR_INFO* ptr_char_info_arr_out);
+    void reset();
 private:
     vector<CHAR_INFO> m_vect_char_info_buff;
-}
+};

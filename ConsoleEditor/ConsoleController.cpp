@@ -45,14 +45,15 @@ void ConsoleController::move_cursor(DIRECTION direction, int distance) {
     m_current_console_buff.move_cursor(direction, distance);
 }
 
-void ConsoleController::activate_editor_view(ConsoleBuffer editor_model_buff) {
+void ConsoleController::activate_editor_view(ConsoleBuffer editor_console) {
 
     HANDLE                      h_stdout = GetStdHandle(STD_OUTPUT_HANDLE);
     CONSOLE_SCREEN_BUFFER_INFO  screen_info;
 
     GetConsoleScreenBufferInfo(h_stdout, &screen_info);
-    editor_model_buff.render(screen_info);
-    m_current_console_buff = editor_model_buff;
+
+    editor_console.render(screen_info);
+    m_current_console_buff = editor_console;
 }
 
 void ConsoleController::activate_original_view(ConsoleBuffer original_console) {

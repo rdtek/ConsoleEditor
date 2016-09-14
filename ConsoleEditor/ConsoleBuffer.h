@@ -24,15 +24,15 @@ public:
     bool line_numbers_on() const { return m_line_numbers_on; }
     void line_numbers_on(int bool_on) { m_line_numbers_on = bool_on; }
 
-    /* get_char_buffer: read the char_info items into the output array. */
-    void char_buffer_array(CHAR_INFO *char_info_buff_out);
-    void insert_line_num(size_t line_num, size_t *line_num_size_out);
-    void insert_line_chars(size_t num_chars_this_line);
-    void append(string& str_content);
+    /* char_buffer_array: read the char_info items into the output array. */
+    void char_buffer_array(CHAR_INFO* char_info_buff_out);
+
+    void build_line_num_string(size_t line_num, string& str_line_num_out);
+    void build_line_content_string(size_t idx_model_begin, size_t content_length, string& str_content_out);
 
     int length();
     void render(CONSOLE_SCREEN_BUFFER_INFO screen_info);
-    void display(CONSOLE_SCREEN_BUFFER_INFO screen_info, CHAR_INFO* ptr_char_info_arr);
+    void display(CONSOLE_SCREEN_BUFFER_INFO screen_info);
 
     void refresh_cursor();
     void move_cursor(DIRECTION direction, int distance);
@@ -54,7 +54,7 @@ protected:
     EDITOR_MODE editor_mode = NORMAL_MODE;
     bool m_line_numbers_on;
     HANDLE m_handle_screen_buff;
-    CharInfoBuffer m_model_char_info_buff;
+    vector<char> m_model_char_buff;
     CharInfoBuffer m_view_char_info_buff;
     int m_cursor_X;
     int m_cursor_Y;

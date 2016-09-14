@@ -8,34 +8,39 @@ int CharInfoBuffer::size() {
     return m_vect_char_info_buff.size();
 }
 
-void CharInfoBuffer::insert(size_t idx_insert, 
-    CHAR_INFO* ptr_char_info_array_start, size_t length) {
-    
-    m_vect_char_info_buff.insert(
-        m_vect_char_info_buff.begin() + idx_insert, 
-        ptr_char_info_array_start,
-        ptr_char_info_array_start + length
-    );
+CHAR_INFO CharInfoBuffer::at(size_t index) {
+    return m_vect_char_info_buff[index];
 }
 
 void CharInfoBuffer::append(CHAR_INFO& char_info) {
     m_vect_char_info_buff.push_back(char_info);
 }
 
-void CharInfoBuffer::set_range(const char chr, size_t idx_start, size_t length) {
-    if (m_vect_char_info_buff.size() < idx_start) return;
+void CharInfoBuffer::append(CHAR_INFO* char_info_arr, size_t begin, size_t length) {
+    for (size_t i = begin; i < begin + length; i++) {
+        this->append(char_info_arr[i]);
+    }
+}
 
-    CHAR_INFO char_info;
-    char_info.Char.UnicodeChar = chr;
-    char_info.Attributes = FG_COLOR::WHITE;
-
-    for (size_t i = idx_start; i < idx_start + length; i++) {
-        if (m_vect_char_info_buff.size() < i) break;
-        m_vect_char_info_buff[i] = char_info;
+void CharInfoBuffer::append(const string& str_line_content, FG_COLOR foreground_color) {
+    
+    for (int i = 0; i < str_line_content.size(); i++) {
+        CHAR_INFO char_info;
+        char_info.Char.UnicodeChar = str_line_content.at(i);
+        char_info.Attributes = foreground_color;
+        this->append(char_info);
     }
 }
 
 /* to_char_info_array: fill the ouput array with the CHAR_INFO items. */
 void CharInfoBuffer::to_array(CHAR_INFO* ptr_char_info_arr_out) {
+    ptr_char_info_arr_out = &m_vect_char_info_buff[0];
     //TODO: copy the content from the vector to the output array
 }
+
+void CharInfoBuffer::reset() {
+    //Clear and release the memory of the vector
+    m_vect_char_info_buff.clear();
+    vector<CHAR_INFO>().swap(m_vect_char_info_buff);
+}
+
