@@ -143,6 +143,8 @@
   </ItemDefinitionGroup>
   <ItemGroup>
     <ClCompile Include="CharInfoBuffer.cpp" />
+    <ClCompile Include="CharItem.cpp" />
+    <ClCompile Include="CharLine.cpp" />
     <ClCompile Include="ConsoleBuffer.cpp" />
     <ClCompile Include="AppMain.cpp" />
     <ClCompile Include="ConsoleController.cpp" />
@@ -152,6 +154,8 @@
   <ItemGroup>
     <ClInclude Include="AppCommon.h" />
     <ClInclude Include="CharInfoBuffer.h" />
+    <ClInclude Include="CharItem.h" />
+    <ClInclude Include="CharLine.h" />
     <ClInclude Include="ConsoleBuffer.h" />
     <ClInclude Include="AppMain.h" />
     <ClInclude Include="ConsoleColors.h" />

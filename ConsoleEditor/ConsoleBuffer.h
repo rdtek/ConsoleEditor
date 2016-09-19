@@ -1,9 +1,13 @@
 #pragma once
 #include "AppCommon.h"
-#include <vector>
+#include <iterator>     // std::back_inserter
+#include <vector>       // std::vector
+#include <algorithm>    // std::copy
 #include <stdio.h>
 #include <string>
 #include "FileTools.h"
+#include "CharItem.h"
+#include "CharLine.h"
 #include "CharInfoBuffer.h"
 #include "ConsoleColors.h"
 
@@ -28,12 +32,13 @@ public:
     void line_numbers_on(int bool_on) { m_line_numbers_on = bool_on; }
 
     bool is_line_start(size_t idx_char);
+    bool get_line_idx(size_t idx_char, size_t& idx_line_out);
 
     /* char_buffer_array: read the char_info items into the output array. */
     void char_buffer_array(CHAR_INFO* char_info_buff_out);
 
     void build_line_num_string(size_t line_num, string& str_line_num_out);
-    void build_line_content_string(size_t idx_model_begin, size_t content_length, string& str_content_out);
+    void build_line_content_string(size_t idx_char, size_t content_length, string& str_content_out);
 
     int length();
     void render(CONSOLE_SCREEN_BUFFER_INFO screen_info);
@@ -59,7 +64,8 @@ protected:
     EDITOR_MODE m_editor_mode = NORMAL_MODE;
     bool m_line_numbers_on;
     HANDLE m_handle_screen_buff;
-    vector<string> m_model_lines;
+    vector<CharLine> m_model_char_lines;
+    vector<CharItem> m_model_char_items;
     CharInfoBuffer m_view_char_info_buff;
     size_t m_view_top_left_index;
     int m_cursor_X;

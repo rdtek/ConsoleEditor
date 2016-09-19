@@ -7,19 +7,41 @@ ConsoleBuffer::ConsoleBuffer() {
 ConsoleBuffer::~ConsoleBuffer() {}
 
 int ConsoleBuffer::length(){
-    return m_model_lines.size(); 
+    return m_model_char_items.size(); 
 }
 
 //load_file: Load first 1000 lines into buffer
 void ConsoleBuffer::load_file(const string& filename) {
     
     ifstream in(filename.c_str());
-    m_model_lines.clear();
+    m_model_char_items.clear();
+    size_t idx_chars = 0;
 
-    for (int i = 0; i < 1000; ++i) {
+    for (size_t idx_lines = 0; idx_lines < 1000; ++idx_lines) {
+        
         string str_line;
         getline(in, str_line);
-        m_model_lines.push_back(str_line);
+        
+        CharLine line;
+
+        for (size_t i = 0; i < str_line.size(); i++)
+        {
+            CharItem ch(str_line[i]);
+            ch.index(idx_chars);
+            ch.is_line_start(i == 0);
+            ch.line(line);
+            m_model_char_items.push_back(ch);
+            
+            line.add_char_index(idx_chars);
+
+            idx_chars++;
+        }
+
+        //CharItem ch_newline('\n');
+        //ch_newline.index(idx_chars++);
+        //m_model_char_items.push_back(ch_newline);
+
+        m_model_char_lines.push_back(line);
     }
 }
 
@@ -136,15 +158,35 @@ void ConsoleBuffer::char_buffer_array(CHAR_INFO *char_info_buff_out) {
 void ConsoleBuffer::build_line_num_string(size_t line_num, string& str_line_num_out) {
     
     str_line_num_out = to_string(line_num);
+    
     if (str_line_num_out.size() == 1)
         str_line_num_out.insert(0, 1, ' ');
+    
+    //One space margin to content
     str_line_num_out += ' ';
 }
 
-void ConsoleBuffer::build_line_content_string(size_t idx_line, size_t required_line_length, string& str_line_out) {
+void ConsoleBuffer::build_line_content_string(size_t idx_target_char, size_t required_line_length, string& str_line_out) {
 
-    size_t total_lines = m_model_lines.size();
-    str_line_out = m_model_lines[idx_line];
+    size_t idx_search = 0;
+    size_t idx_substring_start = 0;
+    size_t idx_substring_end = 0;
+    size_t idx_line = 0;
+    size_t total_lines = m_model_char_items.size();
+    str_line_out = m_model_char_items[idx_line];
+
+    while (idx_search < idx_target_char && idx_line < m_model_char_items.size()) {
+        
+        //Check if the target char index is on this line
+        size_t size_line = m_model_char_items[idx_line].size();
+        if (idx_target_char >= idx_search && idx_target_char < idx_search + size_line) {
+            idx_substring_start = idx_target_char - idx_search;
+            idx_substring_end = idx_search + size_line;
+        }
+        
+        idx_search += m_model_char_items[idx_line].size();
+        idx_line++;
+    }
 
     //Pad right to fill up to line length
     if(str_line_out.size() < required_line_length)
@@ -159,16 +201,6 @@ void ConsoleBuffer::build_line_content_string(size_t idx_line, size_t required_l
     }
 }
 
-bool ConsoleBuffer::is_line_start(size_t idx_char) {
-    
-    size_t idx_char = 0;
-    size_t idx_line = 0;
-    while (idx_char < m_view_top_left_index) {
-        idx_char += m_model_lines[idx_line].size();
-    }
-    return (idx_char == m_view_top_left_index);
-}
-
 void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
 
     const int   ch_buff_num_lines = 1000;
@@ -181,30 +213,46 @@ void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
 
     //Build new char info array inserting line numbers if necessary
     size_t idx_line = 0;
-    size_t idx_cell = 0;
+    size_t idx_cell = m_view_top_left_index;
     int total_screen_cells = screen_num_columns * screen_num_rows;
     size_t total_screen_lines = screen_num_rows >= 0 ? screen_num_rows : 0;
 
-    //Build char buffer line by line
+
+    //Build char buffer line by line, looping through m_model_char_items
     while (idx_cell < total_screen_cells) {
         
         string str_line_content;
         size_t size_line_content = screen_num_columns;
+        size_t idx_line_out;
+        int max_line_num_size;
+
+        CharItem char_item = m_model_char_items[idx_cell];
+
+        if (m_line_numbers_on) {
+            //Number of cells reserved for line number
+            int line_num = char_item.line().line_index();
+            if (line_num >= 0) {
+                string str_line_num = to_string(line_num + screen_num_rows);
+                max_line_num_size = str_line_num.size();
+            };
+        }
+
+        //TODO: fix line numbers to work with CharLine and CharItem approach
 
         //Append line number to view buffer
-        if (m_line_numbers_on && is_line_start(idx_cell)) {
+        if (m_line_numbers_on && char_item.is_line_start()) {
             string str_line_num;
-            this->build_line_num_string(idx_line, str_line_num);
-            idx_cell += str_line_num.size();
+            this->build_line_num_string(idx_line_out, str_line_num);
             m_view_char_info_buff.append(str_line_num, FG_COLOR::CYAN);
+            idx_cell += str_line_num.size();
             size_line_content -= str_line_num.size();
         }
 
         //Append line content to view buffer
-        this->build_line_content_string(idx_line, size_line_content, str_line_content);
+        this->build_line_content_string(idx_cell, size_line_content, str_line_content);
         m_view_char_info_buff.append(str_line_content, FG_COLOR::WHITE);
 
-        idx_line++;
+        idx_cell++;
     }
 
     //Update the console display
@@ -323,7 +371,7 @@ void ConsoleBuffer::move_cursor(DIRECTION direction, int distance) {
     case DOWN:
         if (curs_y < rows - 1) {
             //TODO: scroll the content buffer down
-            m_view_top_left_index += 
+            //m_view_top_left_index += 
         }
         if (m_editor_mode == NORMAL_MODE && (curs_y < rows - 1))
             move_cursor_to(m_cursor_X, ++m_cursor_Y, h_screen_buff);
