@@ -1,6 +1,8 @@
 #include "ConsoleBuffer.h"
 
-ConsoleBuffer::ConsoleBuffer() {}
+ConsoleBuffer::ConsoleBuffer() {
+    m_view_top_left_index = 0;
+}
 
 ConsoleBuffer::~ConsoleBuffer() {}
 
@@ -46,6 +48,7 @@ void ConsoleBuffer::load_buffer(HANDLE h_source_buffer)
     rect_src_read_area.Left = 0;
     rect_src_read_area.Bottom = src_screen_info.dwSize.Y - 1;
     rect_src_read_area.Right = src_screen_info.dwSize.X - 1;
+    
     if (rect_src_read_area.Top < 0) rect_src_read_area.Top = 0;
     if (rect_src_read_area.Bottom < 0) rect_src_read_area.Bottom = 0;
 
@@ -156,6 +159,16 @@ void ConsoleBuffer::build_line_content_string(size_t idx_line, size_t required_l
     }
 }
 
+bool ConsoleBuffer::is_line_start(size_t idx_char) {
+    
+    size_t idx_char = 0;
+    size_t idx_line = 0;
+    while (idx_char < m_view_top_left_index) {
+        idx_char += m_model_lines[idx_line].size();
+    }
+    return (idx_char == m_view_top_left_index);
+}
+
 void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
 
     const int   ch_buff_num_lines = 1000;
@@ -167,21 +180,28 @@ void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
     int screen_num_rows    = screen_info.srWindow.Bottom - screen_info.srWindow.Top + 1;
 
     //Build new char info array inserting line numbers if necessary
-    size_t idx_line        = 0;
+    size_t idx_line = 0;
+    size_t idx_cell = 0;
+    int total_screen_cells = screen_num_columns * screen_num_rows;
     size_t total_screen_lines = screen_num_rows >= 0 ? screen_num_rows : 0;
 
     //Build char buffer line by line
-    while (idx_line < total_screen_lines) {
+    while (idx_cell < total_screen_cells) {
         
-        //Append line number to char info view buffer
-        string str_line_num;
-        this->build_line_num_string(idx_line, str_line_num);
-        m_view_char_info_buff.append(str_line_num, FG_COLOR::CYAN);
-
-        //Append line content to char info view buffer
         string str_line_content;
-        size_t line_content_length = screen_num_columns - str_line_num.size();
-        this->build_line_content_string(idx_line, line_content_length, str_line_content);
+        size_t size_line_content = screen_num_columns;
+
+        //Append line number to view buffer
+        if (m_line_numbers_on && is_line_start(idx_cell)) {
+            string str_line_num;
+            this->build_line_num_string(idx_line, str_line_num);
+            idx_cell += str_line_num.size();
+            m_view_char_info_buff.append(str_line_num, FG_COLOR::CYAN);
+            size_line_content -= str_line_num.size();
+        }
+
+        //Append line content to view buffer
+        this->build_line_content_string(idx_line, size_line_content, str_line_content);
         m_view_char_info_buff.append(str_line_content, FG_COLOR::WHITE);
 
         idx_line++;
@@ -289,24 +309,24 @@ void ConsoleBuffer::move_cursor(DIRECTION direction, int distance) {
     switch (direction) {
     case LEFT:
         if (m_editor_mode == NORMAL_MODE && curs_x >= 2 && m_line_numbers_on
-            || curs_x >= 1 && !m_line_numbers_on) {
+            || curs_x >= 1 && !m_line_numbers_on)
             move_cursor_to(--m_cursor_X, m_cursor_Y, h_screen_buff);
-        }
         break;
     case UP:
-        if (m_editor_mode == NORMAL_MODE && curs_y >= 1) {
+        if (m_editor_mode == NORMAL_MODE && curs_y >= 1)
             move_cursor_to(m_cursor_X, --m_cursor_Y, h_screen_buff);
-        }
         break;
     case RIGHT:
-        if (m_editor_mode == NORMAL_MODE && curs_x < (cols - 1) && m_line_numbers_on) {
+        if (m_editor_mode == NORMAL_MODE && curs_x < (cols - 1) && m_line_numbers_on)
             move_cursor_to(++m_cursor_X, m_cursor_Y, h_screen_buff);
-        }
         break;
     case DOWN:
-        if (m_editor_mode == NORMAL_MODE && (curs_y < rows - 1)) {
-            move_cursor_to(m_cursor_X, ++m_cursor_Y, h_screen_buff);
+        if (curs_y < rows - 1) {
+            //TODO: scroll the content buffer down
+            m_view_top_left_index += 
         }
+        if (m_editor_mode == NORMAL_MODE && (curs_y < rows - 1))
+            move_cursor_to(m_cursor_X, ++m_cursor_Y, h_screen_buff);
         break;
 
     default: break;

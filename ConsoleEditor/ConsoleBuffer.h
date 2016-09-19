@@ -27,6 +27,8 @@ public:
     bool line_numbers_on() const { return m_line_numbers_on; }
     void line_numbers_on(int bool_on) { m_line_numbers_on = bool_on; }
 
+    bool is_line_start(size_t idx_char);
+
     /* char_buffer_array: read the char_info items into the output array. */
     void char_buffer_array(CHAR_INFO* char_info_buff_out);
 
@@ -59,6 +61,7 @@ protected:
     HANDLE m_handle_screen_buff;
     vector<string> m_model_lines;
     CharInfoBuffer m_view_char_info_buff;
+    size_t m_view_top_left_index;
     int m_cursor_X;
     int m_cursor_Y;
 };
