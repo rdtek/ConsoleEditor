@@ -101,8 +101,44 @@ void ConsoleBuffer::load_buffer(HANDLE h_source_buffer)
         (rect_src_read_area.Right + 1 - rect_src_read_area.Left)
         * (rect_src_read_area.Bottom + 1 - rect_src_read_area.Top);
 
-    m_view_char_info_buff.reset();
-    m_view_char_info_buff.append(ch_info_temp_buff, 0, num_chars_read);
+    m_model_char_items.clear();
+    size_t idx_chars = 0;
+
+    //TODO: make sure m_model_char_lines is empty first.
+    //Populate the model m_model_char_lines
+    for (size_t idx_lines = 0; idx_lines < 1000; ++idx_lines) {
+
+        string str_line;
+        CharLine line;
+
+        //TODO: build up str_line by taking chars from ch_info_temp_buff
+        for (size_t i = 0; i < coord_ch_temp_buff_size.X; i++)
+        {
+            str_line.append(ch_info_temp_buff[i].Char.UnicodeChar, 1);
+        }
+
+        for (size_t i = 0; i < str_line.size(); i++)
+        {
+            CharItem ch(str_line[i]);
+            ch.index(idx_chars);
+            ch.is_line_start(i == 0);
+            ch.line(line);
+            m_model_char_items.push_back(ch);
+
+            line.add_char_index(idx_chars);
+
+            idx_chars++;
+        }
+
+        //CharItem ch_newline('\n');
+        //ch_newline.index(idx_chars++);
+        //m_model_char_items.push_back(ch_newline);
+
+        m_model_char_lines.push_back(line);
+    }
+
+    //m_model_char_items.reset();
+    //m_model_char_items.append(ch_info_temp_buff, 0, num_chars_read);
 
     size(src_screen_info.dwSize);
 }
@@ -166,38 +202,30 @@ void ConsoleBuffer::build_line_num_string(size_t line_num, string& str_line_num_
     str_line_num_out += ' ';
 }
 
-void ConsoleBuffer::build_line_content_string(size_t idx_target_char, size_t required_line_length, string& str_line_out) {
+void ConsoleBuffer::build_line_content_string(size_t idx_model_char_start, size_t size_content_length, string& str_line_out) {
 
-    size_t idx_search = 0;
-    size_t idx_substring_start = 0;
-    size_t idx_substring_end = 0;
-    size_t idx_line = 0;
-    size_t total_lines = m_model_char_items.size();
-    str_line_out = m_model_char_items[idx_line];
+    size_t idx_search           = 0;
+    size_t idx_substring_start  = 0;
+    size_t idx_substring_end    = 0;
+    size_t idx_current_line     = 0;
+    size_t total_lines          = m_model_char_items.size();
 
-    while (idx_search < idx_target_char && idx_line < m_model_char_items.size()) {
-        
-        //Check if the target char index is on this line
-        size_t size_line = m_model_char_items[idx_line].size();
-        if (idx_target_char >= idx_search && idx_target_char < idx_search + size_line) {
-            idx_substring_start = idx_target_char - idx_search;
-            idx_substring_end = idx_search + size_line;
-        }
-        
-        idx_search += m_model_char_items[idx_line].size();
-        idx_line++;
+    if (idx_model_char_start > m_model_char_items.size()) return;
+
+    idx_current_line = m_model_char_items[idx_model_char_start].line().line_index();
+
+    //Build the string starting from begin target char until required length
+    for (size_t i = idx_model_char_start; i < idx_model_char_start + size_content_length; i++)
+    {
+        str_line_out.append( 1, m_model_char_items[i].chr() );
     }
 
     //Pad right to fill up to line length
-    if(str_line_out.size() < required_line_length)
+    if(str_line_out.size() < size_content_length)
     {
-        int num_fill_chars = 
-            required_line_length - str_line_out.size();
+        int num_fill_chars = size_content_length - str_line_out.size();
         if (num_fill_chars >= 1) 
             str_line_out.append(num_fill_chars, ' ');
-    } 
-    else if(str_line_out.size() > required_line_length){
-        //TODO: deal with too big lines, spill onto line below
     }
 }
 
@@ -216,7 +244,6 @@ void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
     size_t idx_cell = m_view_top_left_index;
     int total_screen_cells = screen_num_columns * screen_num_rows;
     size_t total_screen_lines = screen_num_rows >= 0 ? screen_num_rows : 0;
-
 
     //Build char buffer line by line, looping through m_model_char_items
     while (idx_cell < total_screen_cells) {
@@ -242,7 +269,7 @@ void ConsoleBuffer::render(CONSOLE_SCREEN_BUFFER_INFO screen_info) {
         //Append line number to view buffer
         if (m_line_numbers_on && char_item.is_line_start()) {
             string str_line_num;
-            this->build_line_num_string(idx_line_out, str_line_num);
+            this->build_line_num_string(char_item.line().line_index(), str_line_num);
             m_view_char_info_buff.append(str_line_num, FG_COLOR::CYAN);
             idx_cell += str_line_num.size();
             size_line_content -= str_line_num.size();
@@ -264,13 +291,13 @@ void ConsoleBuffer::display(CONSOLE_SCREEN_BUFFER_INFO screen) {
     BOOL func_success;
     int  screen_ncols = screen.srWindow.Right - screen.srWindow.Left + 1;
     int  screen_nrows = screen.srWindow.Bottom - screen.srWindow.Top + 1;
-    int  char_buff_size = screen_ncols * screen_nrows;
+    int  char_info_buff_size = m_view_char_info_buff.size();
     
     //Set buffer large enough to hold characters for one big screen
     //TODO: declare a dynamic array size.
     CHAR_INFO  ch_info_view_arr[20000]; 
 
-    for (size_t i = 0; i < m_view_char_info_buff.size(); i++) {
+    for (size_t i = 0; i < char_info_buff_size; i++) {
         CHAR_INFO ch_info = m_view_char_info_buff.at(i);
         ch_info_view_arr[i] = ch_info;
     }

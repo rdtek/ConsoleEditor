@@ -70,6 +70,23 @@ void log_dbl(const char* note, double doubleVal) {
     fclose(pfile);
 }
 
+void log_wchar(const wchar_t* note, wchar_t wcharVal) {
+    FILE *pfile = NULL;
+    pfile = fopen(LOG_FILE_NAME, "a");
+
+    if (pfile == NULL) {
+        printf("Error opening %s for writing.", LOG_FILE_NAME);
+    }
+    else {
+        fputws(L"\n", pfile);
+        fputws(note, pfile);
+        fputws(L"[", pfile);
+        fputwc(wcharVal, pfile);
+        fputws(L"]", pfile);
+    }
+    fclose(pfile);
+}
+
 void log_wstr(const wchar_t* note, const wchar_t* strVal) {
 
     FILE *pfile = NULL;

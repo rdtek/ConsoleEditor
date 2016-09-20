@@ -1,6 +1,6 @@
 #pragma once
 #include <windows.h>
-#include "logging.h"
+#include "Logging.h"
 
 enum DIRECTION
 {

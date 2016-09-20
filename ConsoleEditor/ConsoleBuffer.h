@@ -61,14 +61,14 @@ public:
     int height();
 
 protected:
-    EDITOR_MODE m_editor_mode = NORMAL_MODE;
-    bool m_line_numbers_on;
-    HANDLE m_handle_screen_buff;
-    vector<CharLine> m_model_char_lines;
-    vector<CharItem> m_model_char_items;
-    CharInfoBuffer m_view_char_info_buff;
-    size_t m_view_top_left_index;
-    int m_cursor_X;
-    int m_cursor_Y;
+    EDITOR_MODE         m_editor_mode = NORMAL_MODE;
+    bool                m_line_numbers_on;
+    HANDLE              m_handle_screen_buff;
+    vector<CharLine>    m_model_char_lines;
+    vector<CharItem>    m_model_char_items;
+    CharInfoBuffer      m_view_char_info_buff;
+    size_t              m_view_top_left_index;
+    int                 m_cursor_X;
+    int                 m_cursor_Y;
 };
 
