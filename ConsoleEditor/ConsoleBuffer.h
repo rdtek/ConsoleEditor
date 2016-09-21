@@ -46,7 +46,7 @@ public:
 
     void refresh_cursor();
     void move_cursor(DIRECTION direction, int distance);
-    void ConsoleBuffer::move_cursor_to(int column, int line, HANDLE h_screen_buff);
+    void move_cursor_to(int column, int line, HANDLE h_screen_buff);
 
     int cursor_X() const { return m_cursor_X; }
     void cursor_X(int x_position) { m_cursor_X = x_position; }
@@ -70,5 +70,11 @@ protected:
     size_t              m_view_top_left_index;
     int                 m_cursor_X;
     int                 m_cursor_Y;
+
+    void read_char_line
+        (CHAR_INFO* char_info_arr, size_t idx_start, size_t size_total_chars, CharLine& char_line, size_t size_line);
+    
+    void read_char_lines
+        (CHAR_INFO* char_info_arr, size_t size_total_chars, size_t size_line, size_t max_lines);
 };
 

@@ -24,18 +24,7 @@ void ConsoleBuffer::load_file(const string& filename) {
         
         CharLine line;
 
-        for (size_t i = 0; i < str_line.size(); i++)
-        {
-            CharItem ch(str_line[i]);
-            ch.index(idx_chars);
-            ch.is_line_start(i == 0);
-            ch.line(line);
-            m_model_char_items.push_back(ch);
-            
-            line.add_char_index(idx_chars);
-
-            idx_chars++;
-        }
+        this->read_char_line();
 
         //CharItem ch_newline('\n');
         //ch_newline.index(idx_chars++);
@@ -101,46 +90,70 @@ void ConsoleBuffer::load_buffer(HANDLE h_source_buffer)
         (rect_src_read_area.Right + 1 - rect_src_read_area.Left)
         * (rect_src_read_area.Bottom + 1 - rect_src_read_area.Top);
 
-    m_model_char_items.clear();
-    size_t idx_chars = 0;
-
-    //TODO: make sure m_model_char_lines is empty first.
-    //Populate the model m_model_char_lines
-    for (size_t idx_lines = 0; idx_lines < 1000; ++idx_lines) {
-
-        string str_line;
-        CharLine line;
-
-        //TODO: build up str_line by taking chars from ch_info_temp_buff
-        for (size_t i = 0; i < coord_ch_temp_buff_size.X; i++)
-        {
-            str_line.append(ch_info_temp_buff[i].Char.UnicodeChar, 1);
-        }
-
-        for (size_t i = 0; i < str_line.size(); i++)
-        {
-            CharItem ch(str_line[i]);
-            ch.index(idx_chars);
-            ch.is_line_start(i == 0);
-            ch.line(line);
-            m_model_char_items.push_back(ch);
-
-            line.add_char_index(idx_chars);
-
-            idx_chars++;
-        }
-
-        //CharItem ch_newline('\n');
-        //ch_newline.index(idx_chars++);
-        //m_model_char_items.push_back(ch_newline);
-
-        m_model_char_lines.push_back(line);
-    }
-
-    //m_model_char_items.reset();
-    //m_model_char_items.append(ch_info_temp_buff, 0, num_chars_read);
+    read_char_lines(ch_info_temp_buff, num_chars_read, coord_ch_temp_buff_size.X, 1000);
 
     size(src_screen_info.dwSize);
+}
+
+void ConsoleBuffer::read_char_line(const string& str_line, CharLine& char_line) {
+
+    for (size_t i = 0; i < str_line.size(); i++)
+    {
+        CharItem ch_item(str_line[i]);
+        ch_item.index(i);
+        ch_item.is_line_start(i == 0);
+        ch_item.line(char_line);
+        m_model_char_items.push_back(ch_item);
+        char_line.add_char_index(i);
+    }
+
+}
+
+void ConsoleBuffer::read_char_line(CHAR_INFO* char_info_arr, size_t idx_start, size_t size_total_chars, CharLine& char_line, size_t size_line) {
+
+    for (size_t i = 0; i < size_line; i++)
+    {
+        CHAR_INFO ch_info = char_info_arr[i];
+        CharItem ch_item(ch_info.Char.UnicodeChar);
+        ch_item.index(i);
+        ch_item.is_line_start(i == 0);
+        ch_item.line(char_line);
+        m_model_char_items.push_back(ch_item);
+        char_line.add_char_index(i);
+    }
+
+}
+
+void ConsoleBuffer::read_char_lines(CHAR_INFO* char_info_arr, size_t size_total_chars, size_t size_line, size_t max_lines) {
+
+    //Populate the model m_model_char_lines
+    size_t idx_line = 0;
+    size_t idx_char_line_start = 0;
+    
+    m_model_char_items.clear();
+    //TODO: make sure m_model_char_lines is empty too.
+
+    //Loop through char info array to build charitem and charline objects
+    while (idx_line < max_lines && idx_char_line_start < size_total_chars)
+    {
+        CharLine char_line;
+        char_line.line_index(idx_line);
+
+        this->read_char_line(
+            char_info_arr, 
+            idx_char_line_start, 
+            size_total_chars, 
+            char_line, 
+            size_line
+        );
+
+        m_model_char_lines.push_back(char_line);
+        idx_char_line_start += size_line;
+        idx_line++;
+    }
+
+    CharItem ci = m_model_char_items[0];
+    size_t ln = ci.line().line_index();
 }
 
 /* size: set the screen size for this console. */
