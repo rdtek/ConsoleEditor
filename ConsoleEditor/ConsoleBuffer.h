@@ -31,14 +31,11 @@ public:
     bool line_numbers_on() const { return m_line_numbers_on; }
     void line_numbers_on(int bool_on) { m_line_numbers_on = bool_on; }
 
-    bool is_line_start(size_t idx_char);
-    bool get_line_idx(size_t idx_char, size_t& idx_line_out);
-
     /* char_buffer_array: read the char_info items into the output array. */
     void char_buffer_array(CHAR_INFO* char_info_buff_out);
 
     void build_line_num_string(size_t line_num, string& str_line_num_out);
-    void build_line_content_string(size_t idx_char, size_t content_length, string& str_content_out);
+    void build_line_content_string(size_t& idx_model_char_start, size_t content_length, string& str_content_out);
 
     int length();
     void render(CONSOLE_SCREEN_BUFFER_INFO screen_info);
@@ -70,6 +67,8 @@ protected:
     size_t              m_view_top_left_index;
     int                 m_cursor_X;
     int                 m_cursor_Y;
+
+    void read_char_line(const string& str_line, CharLine& char_line);
 
     void read_char_line
         (CHAR_INFO* char_info_arr, size_t idx_start, size_t size_total_chars, CharLine& char_line, size_t size_line);
