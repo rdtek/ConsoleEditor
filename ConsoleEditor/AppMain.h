@@ -3,4 +3,3 @@
 #include <stdio.h>
 #include <iostream>
 #include "ConsoleController.h"
-#include "ConsoleBufferModel.h"

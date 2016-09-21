@@ -18,10 +18,6 @@ void CharInfoBuffer::append(CHAR_INFO& char_info) {
 
 void CharInfoBuffer::append(CHAR_INFO* char_info_arr, size_t begin, size_t length) {
     for (size_t i = begin; i < begin + length; i++) {
-        if (i > 11990) {
-            log_int("append i: ", i);
-            log_wchar(L">", char_info_arr[i].Char.UnicodeChar);
-        }
         this->append(char_info_arr[i]);
     }
 }

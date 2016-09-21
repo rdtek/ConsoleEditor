@@ -13,6 +13,10 @@ int ConsoleBuffer::length(){
 //load_file: Load first 1000 lines into buffer
 void ConsoleBuffer::load_file(const string& filename) {
     
+#ifdef _DEBUG
+    log_time("load_file start");
+#endif
+
     ifstream in(filename.c_str());
     m_model_char_items.clear();
     size_t idx_chars = 0;
@@ -32,6 +36,10 @@ void ConsoleBuffer::load_file(const string& filename) {
 
         m_model_char_lines.push_back(line);
     }
+
+#ifdef _DEBUG
+    log_time("load_file end");
+#endif
 }
 
 void ConsoleBuffer::load_buffer(HANDLE h_source_buffer)

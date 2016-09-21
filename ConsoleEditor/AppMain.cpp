@@ -22,7 +22,6 @@ int main(int argc, char *argv[]) {
     //Debug testing, output some chars to the console so we can read them 
     printf("abcdefg\ntest");
 #endif
-
     original_console.load_buffer(h_std_out);
 
     //Render the editor console
