@@ -1,11 +1,15 @@
 #pragma once
+#include <Windows.h>
+#include <vector>
+#include <sstream>
+#include <string>
 #include <stdio.h>
 #include <wchar.h>
 #include <ctime>
 #include <chrono>
 #include <math.h> 
 
-using namespace std::chrono;
+using namespace std;
 
 void log_time   (const char*    note);
 void log_int    (const char*    note,   int             intVal);

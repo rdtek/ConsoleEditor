@@ -21,7 +21,7 @@ void ConsoleBuffer::load_file(const string& filename) {
     m_model_char_items.clear();
     size_t idx_chars = 0;
 
-    for (size_t idx_lines = 0; idx_lines < 1000; ++idx_lines) {
+    for (size_t idx_lines = 0; idx_lines < 300; ++idx_lines) {
         
         string str_line;
         getline(in, str_line);
@@ -29,10 +29,6 @@ void ConsoleBuffer::load_file(const string& filename) {
         CharLine line;
         line.line_index(idx_lines);
         this->read_char_line(str_line, line);
-
-        //CharItem ch_newline('\n');
-        //ch_newline.index(idx_chars++);
-        //m_model_char_items.push_back(ch_newline);
 
         m_model_char_lines.push_back(line);
     }
@@ -104,7 +100,7 @@ void ConsoleBuffer::load_buffer(HANDLE h_source_buffer)
 }
 
 void ConsoleBuffer::read_char_line(const string& str_line, CharLine& char_line) {
-
+    log_time("read_char_line start");
     for (size_t i = 0; i < str_line.size(); i++)
     {
         CharItem ch_item(str_line[i]);
@@ -114,7 +110,7 @@ void ConsoleBuffer::read_char_line(const string& str_line, CharLine& char_line) 
         m_model_char_items.push_back(ch_item);
         char_line.add_char_index(i);
     }
-
+    log_time("read_char_line end");
 }
 
 void ConsoleBuffer::read_char_line(CHAR_INFO* char_info_arr, size_t idx_start, size_t size_total_chars, CharLine& char_line, size_t size_line) {

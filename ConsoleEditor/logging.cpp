@@ -1,6 +1,7 @@
 #include "Logging.h"
 
 const char* LOG_FILE_NAME = "C:\\temp\\console_editor_log.txt";
+vector<string> m_vect_log_buff;
 
 void log_int(const char* note, int intVal) {
 
@@ -104,35 +105,6 @@ void log_cstr(const char* note, const char* cstrVal) {
     fclose(pfile);
 }
 
-void log_time(const char* note) {
-
-    FILE *pfile = NULL;
-    pfile = fopen(LOG_FILE_NAME, "a");
-
-    unsigned long total_ms      = round(system_clock::now().time_since_epoch() / milliseconds(1));
-    unsigned long ms            = total_ms % 1000;
-
-    unsigned long total_seconds = round(total_ms / 1000);
-    unsigned long seconds       = total_seconds % 60;
-    
-    unsigned long total_minutes = round(total_seconds / 60);
-    unsigned long minutes       = total_minutes % 60;
-    
-    unsigned long total_hours   = round(total_minutes / 60);
-    unsigned long hours         = total_hours % 24;
-
-    if (pfile == NULL) {
-        printf("Error opening %s for writing.", LOG_FILE_NAME);
-    }
-    else {
-        fputs("\n", pfile);
-        fputs(note, pfile);
-        fputs(" ", pfile);
-        fprintf(pfile, "%lu:%lu:%lu.%lu", hours, minutes, seconds, ms);
-    }
-    fclose(pfile);
-}
-
 void log_wstr(const wchar_t* note, const wchar_t* strVal) {
 
     FILE *pfile = NULL;
@@ -146,6 +118,41 @@ void log_wstr(const wchar_t* note, const wchar_t* strVal) {
         fputws(note, pfile);
         fputws(L" ", pfile);
         fputws(strVal, pfile);
+    }
+    fclose(pfile);
+}
+
+void log_time(const char* note) {
+
+    ostringstream str_stream;
+    SYSTEMTIME sys_time;
+
+    GetLocalTime(&sys_time);
+
+    str_stream 
+        << sys_time.wYear << "-" << sys_time.wMonth << "-" << sys_time.wDay << " "
+        << sys_time.wHour << ":" << sys_time.wMinute << "::" << sys_time.wSecond 
+        << "." << sys_time.wMilliseconds;
+
+    //TODO: check if need to flush log buffer
+    //flush_log_buff()
+}
+
+void flush_log_buff() {
+    
+    FILE *pfile = NULL;
+    pfile = fopen(LOG_FILE_NAME, "a");
+    //TODO: write all the log strings from the vector to the log file
+
+    if (m_vect_log_buff.size() < 20) return;
+
+    if (pfile == NULL) {
+        printf("Error opening %s for writing.", LOG_FILE_NAME);
+    }
+    else {
+        //TODO loop through the log buffer vector and print each string to file
+        //fprintf(pfile,"\n%s ");
+        //fputs(note, pfile);
     }
     fclose(pfile);
 }
